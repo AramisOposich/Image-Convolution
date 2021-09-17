@@ -6,7 +6,7 @@ int main (int argc, char *argv[])
     FILE *fp;
     FILE *fOutput;
     int N, i, Np, shmcreat, opt, rv, start_y, y, row, width, zeilen, colourdeep;
-    double kernel[5000];
+    double kernel[1000];
     char buffer[100];
     char *end = NULL;
     unsigned char *buf;

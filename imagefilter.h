@@ -16,7 +16,7 @@
 struct timeval t1, t2;
 
 key_t key;
-key_t key_child[5000];
+key_t key_child[1000];
 
 int imagefiltering(int child_ref, int y_start, int row, int column, int colourdeep,int laufzahl, int N, double *kernel);
 
