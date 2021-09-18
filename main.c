@@ -44,12 +44,7 @@ int main (int argc, char *argv[])
             i = 0;
 #endif
             for (kernel[0] = strtod (pker, &end); pker != end ; kernel[i] = strtod (pker, &end)) {
-/*
- * ### FB_CF: Überprüfen, ob *pker ein gültiges Zeichen ist (also ',' oder '\0')
- * ### FB_CF: Sie benötigen auch eine Überprüfung, ob i < 5000, da kernel[] ja nur 5000 Elemente
- *            aufnehmen kann. Sinnvoller wäre es allerdings als Maximalgröße 5041, also 71x71,
- *            zo wählen, da 5000 keine Quadratzahl ist.
- */
+
                 pker = end;
                 pker++;
                 i++;
@@ -75,9 +70,7 @@ int main (int argc, char *argv[])
         case 'o':
             errno = 0;
             fOutput = fopen (optarg, "wb");
-/*
- * ### FB_CF: Hier müssen Sie fOutput und nicht fp checken.
- */
+
 #ifdef ORIGINAL
             if (fp == NULL) {
 #else
@@ -95,12 +88,6 @@ int main (int argc, char *argv[])
         }
     }
 
-/*
- * ### FB_CF: Was, wenn -i oder -o vergessen wird? => Sie müssen hier
- *            prüfen, ob fp und fOutput gültig sind.
- * ### FB_CF: Allgemein greifen Sie auf uninitialisierten Speicher zu,
- *            wenn bestimmte Argumente fehlen (auch -p und -k)
- */
 
     /*******READ THE HEADER FROM P6 PIC*****/
     if (fgets (buffer, 100, (FILE*) fp)  == NULL) {
@@ -146,10 +133,7 @@ int main (int argc, char *argv[])
 
     key = ftok ("/etc/hostname", 'b');
     if (key == -1) {
-/*
- * ### FB_CF: Das reicht leider nicht zur Fehlerbehandlung. Sie müssen auch
- *            dafür sorgen, dass key (das ja hier -1 ist) nicht weiter verwendet wird.
- */
+
        printf("%s at [%s:%d]\n",strerror(errno),__FILE__,__LINE__);
     }
     //Shared Memory erstellt
@@ -177,9 +161,6 @@ int main (int argc, char *argv[])
     int column = width * 3;
     int child_shmcreat[Np];
 
-/*
- * ### FB_CF: start_y wird uninitialisiert verwendet.
- */
 #ifndef ORIGINAL
     start_y = 0;
 #endif
@@ -198,13 +179,7 @@ int main (int argc, char *argv[])
             exit (EXIT_FAILURE);
         }
         if (rv == 0) {		//Kindprozess
-/*
- * ### FB_CF: Da der Kindprozess alle FILEs dupliziert bekommt, müssen Sie
- *            fOutput und fp hier schließen (Im Hauptprozess bleiben sie
- *            trotzdem offen, da die zwei Prozesse ab dem fork()
- *            im Bezug auf Schreibezugriffe auf Variablen komplett
- *            getrennt sind.
- */
+
             gettimeofday(&t1, NULL);
             imagefiltering (child_ref, y, row, column, colourdeep, laufzahl, N, kernel);
             gettimeofday(&t2, NULL);
@@ -213,14 +188,7 @@ int main (int argc, char *argv[])
         }
         else {
             if (child_ref == (Np - 1)) {
-/*
- * ### FB_CF: Woher wissen Sie, dass zu diesem Zeitpunkt alle Kindprozesse fertig sind?
- *            => Eigentlich (lt. Angabe) bräuchten Sie hier eine Synchronisation mittels
- *            Message Queue. In Ihrer Implementierung tritt eine sog. Race Condition auf,
- *            d.h. man kann nicht voraussagen, ob alle Kindprozesse schon terminiert sind
- *            wenn der Elternprozess hier ankommt und den Speicher, den die Kinder beschreiben
- *            schon auslesen möchte.
- */
+
                 start_y = 0;
 /*
  * ### FB_CF: Rückgabewert prüfen.
@@ -234,27 +202,14 @@ int main (int argc, char *argv[])
                     unsigned char *buf_child;
                     size_t Bufsize_child = PixelSize * (row-start_y) * column;
                     int img_lauf = column * (row - start_y);
-/*
- * ### FB_CF: Der Parameter "proj_id" darf bei ftok() nicht 0 sein, siehe Manpage:
- *              "The  ftok() function uses the identity of the file named
- *               by the given pathname (which must refer to an existing,
- *               accessible file) and the least significant 8 bits of
- *               proj_id (which must be nonzero) to generate a key_t type System V IPC key."
- */
+
                     key_child[child_ref] = ftok ("/etc/hostname", child_ref);
                     if (key_child[child_ref] == -1) {
                        printf("%s at [%s:%d]\n",strerror(errno),__FILE__,__LINE__);
-/*
- * ### FB_CF: Hier müssen Sie irgendwie reagieren, nicht nur eine Fehlermeldung ausgeben.
- */
+
                     }
 
-/*
- * ### FB_CF: Wenn die Kindprozesse hier das jeweilige Shared Memory noch nicht erstellt haben,
- *            geht das shmget() schief. Hier brauchen Sie eine Synchronisation (eben zB über die Message Queue).
- *            Damit ich Ihr Programm ausprobieren kann, habe ich hier eine Quick&Dirty Synchronisiation eingefügt
- *            die so lange wartet, bis das shared memory da ist.
- */
+
 
 #ifdef ORIGINAL
                     child_shmcreat[child_ref] = shmget (key_child[child_ref], Bufsize_child, 0600);
